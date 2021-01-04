@@ -84,6 +84,9 @@ class Blockchain:
 # Creating a Web App
 app = Flask(__name__)
 
+# Creating an address for the node on port 5000
+node_address = str(uuid4()).replace('-', '')
+
 # Creating a Blockchain
 blockchain = Blockchain()
 
@@ -94,12 +97,14 @@ def mine_block():
     previous_proof = previous_block['proof']
     proof = blockchain.proof_of_work(previous_proof)
     previous_hash = blockchain.hash(previous_block)
+    blockchain.add_transaction(sender = node_address, receiver = 'Myself', amount = 1)
     block = blockchain.create_block(proof, previous_hash)
     response = {'message': 'Congratulations, you just mined a block!',
                 'index': block['index'],
                 'timestamp': block['timestamp'],
                 'proof': block['proof'],
-                'previous_hash': block['previous_hash']}
+                'previous_hash': block['previous_hash'],
+                'transactions': block['transactions']}
     return jsonify(response), 200
 
 # Getting the full Blockchain
@@ -118,6 +123,17 @@ def is_valid():
     else:
         response = {'message': 'Houston, we have a problem. The Blockchain is not valid.'}
     return jsonify(response), 200
+
+# Adding a new transaction to the last block
+@app.route('/add_transaction', methods = ['POST'])
+def add_transaction():
+    json = request.get_json()
+    transaction_keys = ['sender', 'receiver', 'amount']
+    if not all (key in json for key in transaction_keys):
+        return 'Some elements of the transaction are missing', 400
+    index = blockchain.add_transaction(json['sender'], json['receiver'], json['amount'])
+    response = {'message': f'This transaction will be added to block {index}'}
+    return jsonify(response), 201
 
 # Running the app
 app.run(host = '0.0.0.0', port = 5000)
