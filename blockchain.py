@@ -1,7 +1,9 @@
 import datetime
 import hashlib
 import json
-from flask import Flask, jsonify
+from flask import Flask, jsonify, request
+import requests
+from uuid import uuid4
 from urllib.parse import urlparse
 
 class Blockchain:
@@ -66,6 +68,18 @@ class Blockchain:
     def add_node(self, address):
         parsed_url = urlparse(address)
         self.nodes.add(parsed_url.netloc)
+
+    def replace_chain(self):
+        replaced = False
+        for node in self.nodes:
+            response = requests.get(f'http://{node}/get_chain')
+            if response.status_code == 200:
+                length = response.json()['length']
+                chain = response.json()['chain']
+                if length > len(self.chain) and self.is_chain_valid(chain):
+                    replaced = True
+                    self.chain = chain
+        return replaced
 
 # Creating a Web App
 app = Flask(__name__)
