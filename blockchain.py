@@ -5,6 +5,7 @@ from flask import Flask, jsonify, request
 import requests
 from uuid import uuid4
 from urllib.parse import urlparse
+import sys
 
 class Blockchain:
 
@@ -90,6 +91,16 @@ node_address = str(uuid4()).replace('-', '')
 # Creating a Blockchain
 blockchain = Blockchain()
 
+# Processing command line arguments
+if len(sys.argv) != 3:
+    print('A wrong number of the command line arguments! It must be exactly 3!')
+    quit()
+
+username = sys.argv[1]
+print(f'Username: {username}')
+port_number = sys.argv[2]
+print(f'Port number: {port_number}')
+
 # Mining a new block
 @app.route('/mine_block', methods = ['GET'])
 def mine_block():
@@ -97,7 +108,7 @@ def mine_block():
     previous_proof = previous_block['proof']
     proof = blockchain.proof_of_work(previous_proof)
     previous_hash = blockchain.hash(previous_block)
-    blockchain.add_transaction(sender = node_address, receiver = 'Myself', amount = 1)
+    blockchain.add_transaction(sender = node_address, receiver = username, amount = 1)
     block = blockchain.create_block(proof, previous_hash)
     response = {'message': 'Congratulations, you just mined a block!',
                 'index': block['index'],
@@ -159,4 +170,4 @@ def replace_chain():
     return jsonify(response), 200
 
 # Running the app
-app.run(host = '0.0.0.0', port = 5000)
+app.run(host = '0.0.0.0', port = port_number)
